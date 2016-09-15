@@ -1,0 +1,12 @@
+section {
+  background: url(../img/avatar.jpg) no-repeat center / cover;
+  min-height: 100px;
+  border: 2px solid green;
+  box-shadow: 0 0 20px rgba(0,0,0,.5);
+  display: flex;
+  flex-flow: column wrap;
+  h2,
+  h3 {
+    align-self: center;
+    }
+}
