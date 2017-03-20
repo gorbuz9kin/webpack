@@ -1,64 +1,86 @@
-'use strict';
-
-var path = require('path');
-var webpack = require('webpack');
-
-var ExtractTextPlugin = require('extract-text-webpack-plugin');
-var CopyWebpackPlugin = require('copy-webpack-plugin');
-
-var HtmlWebpackPlugin = require('html-webpack-plugin');
-var WebpackConfig = require('webpack-config');
-var WebpackDevServer = require("webpack-dev-server");
-
-var precss = require('precss');
-var autoprefixer = require('autoprefixer');
-var OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin');
-var CompressionPlugin = require("compression-webpack-plugin");
+const NODE_ENV = process.env.NODE_ENV || 'development';
+const webpack = require('webpack');
+let ExtractTextPlugin = require("extract-text-webpack-plugin");
 
 module.exports = {
-    context: __dirname + '/src',
+    context: __dirname + '/frontend',
     entry: {
-        main: './js/main',
-        style: './sass/main'
+        home: "./home",
+        about: "./about"
     },
     output: {
-        path: __dirname + '/build',
-        filename: 'js/[name].js',
-        publicPath: '../'
-    },
-    resolve: {
-        extensions: ['', '.js', '.scss', '.css'],
-        modulesDirectories: ['node_modules']
-    },
-    devtool: "inline-source-maps",
-    watch:true,
-    plugins: [
-        new ExtractTextPlugin('css/[name].css')
-    ],
-    module: {
-        loaders: [{
-                test: /\.js/,
-                loader: 'babel',
-                exclude: /(node_modules|bower_components)/
-            },
-            {
-                test: /\.s?css$/,
-                loader: ExtractTextPlugin.extract('style', 'css?sourceMap!resolve-url!sass?sourceMap')
-            },
-            {
-                test: /\.(html)$/,
-                loader: 'file?name=[path][name].[ext]'
-            },
-            {
-                test: /\.(png|jpg|svg|ttf||eot||woff|woff2)$/,
-                loader: 'file?name=[path][name].[ext]'
-            }]
+        path: __dirname + '/public/js',
+        filename: "[name].js",
+        library: "[name]"
     },
 
-    devServer: {
-        host: 'localhost',
-        port: 8080,
-        inline: true
-    }
+    watch: NODE_ENV == 'development',
+
+    watchOptions: {
+        aggregateTimeout: 100
+    },
+
+   devtool: NODE_ENV == 'development' ? "cheap-inline-module-source-map" : null,
+
+   plugins: [
+       new webpack.NoErrorsPlugin(),
+       new webpack.DefinePlugin({
+           NODE_ENV: JSON.stringify(NODE_ENV)
+        }),
+       new webpack.optimize.CommonsChunkPlugin({
+           name: "common",
+           chunks: ['home', 'about']
+       }),
+       new ExtractTextPlugin('./css/styles.css')
+   ],
+
+   resolve: {
+       modulesDirectories: ['node_modules'],
+       extensions: ['', '.js']
+   },
+
+   resolveLoader: {
+       modulesDirectories: ['node_modules'],
+       moduleTemplates: ['*-loader', '*'],
+       extensions: ['', '.js']
+   },
+
+   module: {
+       loaders: [
+           {
+               test: /\.js$/,
+               loader: 'babel-loader',
+               plugins: ['transform-runtime']
+           },
+           {
+               test: /\.pug$/,
+               loader: 'pug'
+           },
+           {
+               test: /\.css$/,
+               loader: ExtractTextPlugin.extract('style', 'css!autoprefixer?browser=last 2 version')
+           },
+            {
+               test: /\.styl$/,
+               loader: ExtractTextPlugin.extract('style' ,'css!autoprefixer?browser=last 2 version!stylus?resolve url')
+           },
+           {
+               test: /\.(png|jpg|svg|ttf|eot|woff|woff2)$/,
+               loader: 'file?name=[path][name].[ext]'
+           }
+       ]
+   },
 
 };
+
+if (NODE_ENV == 'production') {
+    module.exports.plugins.push (
+        new webpack.optimize.UglifyJsPlugin({
+            compress: {
+                warnings: false,
+                drop_console: true,
+                unsafe: true
+            }
+        })
+    );
+}
